@@ -35,7 +35,7 @@ if len(rules) < 1:
 	errorExit('No rules defined.')
 
 # Check target path
-if not os.path.isdir(target):
+if not os.path.exists(target) or not os.path.isdir(target):
 	errorExit('The directory you specified is not a directory.')
 
 # Scan target dir
