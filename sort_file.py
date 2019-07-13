@@ -3,15 +3,13 @@
 import sys
 import os
 import shutil
+import glob
 
 config = 'config.txt'
 rules = []
-'''
-rules = [
-	{ 'key': '.txt', 'dest': '.\TEXT' },
-	{ 'key': '.csv', 'dest': '.\CSV' }
-]
-'''
+
+replaces = {
+}
 
 def errorExit(message, code = -1):
 	print(message)
@@ -47,13 +45,33 @@ for file in os.listdir(target):
 		print('{} is a directory. Skipping.'.format(path))
 		continue
 	
+	# Check all rules
 	for i in rules:
-		if i['key'] in file:
+		key = i['key']
+		dest = i['dest']
+		if key in file:
 			sys.stdout.write('Copying {} ... '.format(file))
+
+			# Check whether destination file exists
+			if os.path.exists(os.path.join(dest, file)):
+				print('already exists. Renaming...')
+				name, ext = os.path.splitext(file)
+				count = len(glob.glob(os.path.join(dest, "*" + ext)))
+				dest = os.path.join(dest, name + " #{:02d}".format(count) + ext)
+			
+			# replace characters in filename
+			for k, v in replaces.items():
+				dest = dest.replace(k, v)
+			print(dest)
+			
+			# Do move
 			try:
-				shutil.move(path, i['dest'])
+				shutil.move(path, dest)
 			except:
 				print('failed. Skipping...')
 			else:
 				print('done.')
 			break
+			
+	else:
+		print("'{}' doesn't match any rules. Skipping.".format(file))
