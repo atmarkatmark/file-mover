@@ -7,17 +7,12 @@ import glob
 
 config = 'config.txt'
 rules = []
-'''
-rules = [
-	{ 'key': '.txt', 'dest': '.\TEXT' },
-	{ 'key': '.csv', 'dest': '.\CSV' }
-]
-'''
 
 replaces = {
 	'🈡': '　',
 	'🈟': '　',
 	'🈞': '　',
+	'🈑': '　'
 }
 
 # sys.exit() with priting message to stdout
