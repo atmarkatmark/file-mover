@@ -7,66 +7,91 @@ import glob
 
 config = 'config.txt'
 rules = []
+'''
+rules = [
+	{ 'key': '.txt', 'dest': '.\TEXT' },
+	{ 'key': '.csv', 'dest': '.\CSV' }
+]
+'''
 
 replaces = {
+	'🈡': '　',
+	'🈟': '　',
+	'🈞': '　',
 }
 
+# sys.exit() with priting message to stdout
 def errorExit(message, code = -1):
 	print(message)
 	sys.exit(code)
 
 # Check arguments
 if len(sys.argv) != 2:
-	errorExit('Usage: {[0]} TARGET_DIR'.format(sys.argv))
+	errorExit('Usage: {[0]} SOURCE_DIR'.format(sys.argv))
 
-target = sys.argv[1]
+src = sys.argv[1]
 
 # Check rules
 with open(config, encoding = 'utf-8') as f:
 	for l in f.readlines():
 		l = l.split('\t')
+		key = l[0].strip()
+		dest = l[1].strip()
+
+		# If dest is not a directory and the name is not used, then make the dir 
+		if not os.path.isdir(dest):
+			if not os.path.exists(dest):
+				print("Destination '{}' doest not exist. Making...".format(dest))
+				os.makedirs(dest)
+			else:
+				print("Destination '{}' is a file. Skipping.")
+				continue
+		
+		# Append a rule to the list
 		rules.append({
-			'key': l[0].strip(),
-			'dest': l[1].strip()
+			'key': key,
+			'dest': dest
 		})
 if len(rules) < 1:
-	errorExit('No rules defined.')
+	errorExit('No rules defined. Exiting...')
 
-# Check target path
-if not os.path.exists(target) or not os.path.isdir(target):
+# Check source path
+if not os.path.exists(src) or not os.path.isdir(src):
 	errorExit('The directory you specified is not a directory.')
 
-# Scan target dir
-for file in os.listdir(target):
-	path = os.path.join(target, file)
+# Scan source dir
+for filename in os.listdir(src):
+	target = os.path.join(src, filename)
 
 	# Currently, recursive scanning is disabled
-	if os.path.isdir(path):
-		print('{} is a directory. Skipping.'.format(path))
+	if os.path.isdir(target):
+		print('{} is a directory. Skipping...'.format(target))
 		continue
 	
 	# Check all rules
 	for i in rules:
 		key = i['key']
 		dest = i['dest']
-		if key in file:
-			sys.stdout.write('Copying {} ... '.format(file))
+		if key in filename:
+			sys.stdout.write('Copying {} ..... '.format(filename))
+			sys.stdout.flush()
 
-			# Check whether destination file exists
-			if os.path.exists(os.path.join(dest, file)):
+			# Check whether destination filename exists
+			if os.path.exists(os.path.join(dest, filename)):
 				print('already exists. Renaming...')
-				name, ext = os.path.splitext(file)
-				count = len(glob.glob(os.path.join(dest, "*" + ext)))
+				name, ext = os.path.splitext(filename)
+				count = len(glob.glob(os.path.join(dest, "*" + ext))) + 1
 				dest = os.path.join(dest, name + " #{:02d}".format(count) + ext)
+			else:
+				dest = os.path.join(dest, filename)
 			
-			# replace characters in filename
+			# Replace characters in filename
 			for k, v in replaces.items():
 				dest = dest.replace(k, v)
-			print(dest)
 			
 			# Do move
 			try:
-				shutil.move(path, dest)
+				shutil.move(target, dest)
 			except:
 				print('failed. Skipping...')
 			else:
@@ -74,4 +99,4 @@ for file in os.listdir(target):
 			break
 			
 	else:
-		print("'{}' doesn't match any rules. Skipping.".format(file))
+		print("'{}' doesn't match any rules. Skipping.".format(filename))
